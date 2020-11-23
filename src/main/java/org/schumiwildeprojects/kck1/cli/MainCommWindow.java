@@ -58,7 +58,7 @@ public class MainCommWindow extends BasicLateInitWindow {
                         String[] splitLine = line.split(" ");
                         String username = line.substring(1, line.indexOf("!~"));
                         StringBuilder lineToAdd = new StringBuilder(splitLine[3].substring(1));
-                        for(int i = 4; i < line.length() - 1; i++)
+                        for(int i = 4; i < splitLine.length; i++)
                             lineToAdd.append(" ").append(splitLine[i]);
                         messages.addLine(username + ": " + lineToAdd.toString());
                     } else if(line.split(" ")[1].toLowerCase().equals("quit")) {

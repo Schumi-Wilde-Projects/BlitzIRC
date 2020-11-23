@@ -55,8 +55,12 @@ public class MainCommWindow extends BasicLateInitWindow {
                             userList.addLine(splits[i].substring(j));
                         }
                     } else if(line.split(" ")[1].toLowerCase().equals("privmsg")){
+                        String[] splitLine = line.split(" ");
                         String username = line.substring(1, line.indexOf("!~"));
-                        messages.addLine(username + ": " + line.split(" ")[3].substring(1));
+                        StringBuilder lineToAdd = new StringBuilder(splitLine[3].substring(1));
+                        for(int i = 4; i < line.length(); i++)
+                            lineToAdd.append(" ").append(splitLine[i]);
+                        messages.addLine(username + ": " + lineToAdd.toString());
                     } else if(line.split(" ")[1].toLowerCase().equals("quit")) {
                         String username = line.substring(1, line.indexOf("!~"));
                         messages.addLine("User " + username + " left the chat");

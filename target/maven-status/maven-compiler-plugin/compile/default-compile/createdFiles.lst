@@ -1,14 +1,16 @@
 org/schumiwildeprojects/kck1/cli/ConnectingProgressWindow.class
 org/schumiwildeprojects/kck1/cli/states/State.class
-org/schumiwildeprojects/kck1/backend/Server.class
 org/schumiwildeprojects/kck1/cli/IRCTerminal.class
+org/schumiwildeprojects/kck1/cli/MainCommWindow$Server.class
 org/schumiwildeprojects/kck1/cli/IRCTerminal$WriteThread.class
 org/schumiwildeprojects/kck1/cli/IRCTerminal$ConnectionThread.class
+org/schumiwildeprojects/kck1/cli/widgets/MessageInputTextBox.class
 org/schumiwildeprojects/kck1/cli/IRCTerminal$TimeoutTask.class
 org/schumiwildeprojects/kck1/backend/Main.class
 org/schumiwildeprojects/kck1/cli/LoginWindow.class
 org/schumiwildeprojects/kck1/cli/states/ConnectingProgressState.class
 org/schumiwildeprojects/kck1/cli/states/MainCommState.class
+org/schumiwildeprojects/kck1/cli/widgets/MessageInputTextBox$SubmitListener.class
 org/schumiwildeprojects/kck1/cli/states/ExitState.class
 org/schumiwildeprojects/kck1/cli/MainCommWindow.class
 org/schumiwildeprojects/kck1/cli/BasicLateInitWindow.class

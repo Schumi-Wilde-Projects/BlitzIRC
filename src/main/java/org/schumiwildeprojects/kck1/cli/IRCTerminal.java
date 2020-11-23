@@ -1,5 +1,6 @@
 package org.schumiwildeprojects.kck1.cli;
 
+import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.WindowBasedTextGUI;
 import com.googlecode.lanterna.screen.Screen;
@@ -8,7 +9,6 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 import org.schumiwildeprojects.kck1.backend.ConnectionState;
 import org.schumiwildeprojects.kck1.backend.Main;
-import org.schumiwildeprojects.kck1.backend.Server;
 import org.schumiwildeprojects.kck1.cli.states.LoginState;
 import org.schumiwildeprojects.kck1.cli.states.State;
 
@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 // singleton (tylko jedno okno główne na aplikację)
 public class IRCTerminal {
     private static IRCTerminal instance;
+    public static String nickname;
     private WindowBasedTextGUI textGUI;
     private final Terminal terminal;
     private final Screen screen;
@@ -101,9 +102,6 @@ public class IRCTerminal {
     }
 
     public ConnectionState connect(String nick, String login, String name, String channel) throws IOException {
-        Server server = new Server();
-        serverThread = new Thread(server);
-
         String pass = ""; // do identyfikacji
         Scanner sc = new Scanner(System.in);
 
@@ -138,8 +136,8 @@ public class IRCTerminal {
         writer.flush( );
 
         currentChannel = channel;
+        nickname = nick;
 
-        serverThread.start();
         writeThread = new Thread(new WriteThread());
         writeThread.start();
 
@@ -154,6 +152,7 @@ public class IRCTerminal {
 
     private IRCTerminal() throws IOException {
         DefaultTerminalFactory factory = new DefaultTerminalFactory();
+        factory.setInitialTerminalSize(new TerminalSize(200, 50));
         terminal = factory.createTerminal();
         terminal.enterPrivateMode();
         terminal.setCursorVisible(false);
@@ -162,10 +161,18 @@ public class IRCTerminal {
         textGUI = new MultiWindowTextGUI(screen);
     }
 
-    private static class TimeoutTask extends TimerTask {
+    private class TimeoutTask extends TimerTask {
 
         @Override
         public void run() {
+            if(socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    System.out.println("Could not close socket");
+                    System.exit(-1);
+                }
+            }
             System.exit(0);
         }
     }
@@ -184,7 +191,10 @@ public class IRCTerminal {
         appIsOpen = false;
         Timer timer = new Timer();
         timer.schedule(new TimeoutTask(), 5000);
-        while(writeThread.isAlive() || serverThread.isAlive() || connectionThread.isAlive() || resultThread.isAlive()) {
+        while((writeThread != null && writeThread.isAlive()) ||
+                (serverThread != null && serverThread.isAlive()) ||
+                (connectionThread != null && connectionThread.isAlive()) ||
+                (resultThread != null && resultThread.isAlive())) {
             try {
                 //noinspection BusyWait
                 Thread.sleep(100);
@@ -194,11 +204,13 @@ public class IRCTerminal {
         }
         timer.cancel();
 
-        try {
-            socket.close();
-        } catch (IOException e) {
-            System.out.println("Could not close socket");
-            System.exit(-1);
+        if(socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                System.out.println("Could not close socket");
+                System.exit(-1);
+            }
         }
     }
 
@@ -239,6 +251,11 @@ public class IRCTerminal {
     public void initializeResultThread(Runnable func) {
         resultThread = new Thread(func);
         resultThread.start();
+    }
+
+    public void initializeServerThread(Runnable func) {
+        serverThread = new Thread(func);
+        serverThread.start();
     }
 
     public void close() throws IOException {

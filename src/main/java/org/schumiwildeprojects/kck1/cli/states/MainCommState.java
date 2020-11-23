@@ -6,7 +6,7 @@ import org.schumiwildeprojects.kck1.cli.MainCommWindow;
 import java.io.IOException;
 
 public class MainCommState extends State {
-    private MainCommWindow window;
+    private final MainCommWindow window;
 
     public MainCommState() throws IOException {
         super();
@@ -20,6 +20,7 @@ public class MainCommState extends State {
 
     @Override
     public void onClose() throws IOException {
+        window.leaveChannel();
         terminal.changeState(new ExitState());
     }
 

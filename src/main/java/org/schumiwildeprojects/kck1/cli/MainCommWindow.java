@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 public class MainCommWindow extends BasicLateInitWindow {
     private TextBox messages;
+    private IRCTerminal terminal;
     private MessageInputTextBox msgInput;
     private TextBox userList;
     private static MainCommWindow instance;
@@ -56,6 +57,11 @@ public class MainCommWindow extends BasicLateInitWindow {
                     } else if(line.split(" ")[1].toLowerCase().equals("privmsg")){
                         String username = line.substring(1, line.indexOf("!~"));
                         messages.addLine(username + ": " + line.split(" ")[3].substring(1));
+                    } else if(line.split(" ")[1].toLowerCase().equals("quit")) {
+                        String username = line.substring(1, line.indexOf("!~"));
+                        messages.addLine("User " + username + " left the chat");
+                        IRCTerminal.writer.write("NAMES " + IRCTerminal.currentChannel + "\r\n");
+                        IRCTerminal.writer.flush();
                     }
                 }
             } catch (Exception ex) {
@@ -78,7 +84,7 @@ public class MainCommWindow extends BasicLateInitWindow {
     public void start() throws IOException {
         TerminalSize termSize = getTextGUI().getScreen().getTerminalSize();
         setPosition(new TerminalPosition((termSize.getColumns() - getSize().getColumns()) / 2, (termSize.getRows() - getSize().getRows()) / 2));
-        IRCTerminal terminal = IRCTerminal.getInstance();
+        terminal = IRCTerminal.getInstance();
         Panel contentPanel = new Panel(new LinearLayout(Direction.VERTICAL));
 
         Panel mainClientPanel = new Panel(new LinearLayout(Direction.HORIZONTAL));
@@ -125,8 +131,16 @@ public class MainCommWindow extends BasicLateInitWindow {
 
         setComponent(contentPanel);
 
+        messages.addLine("[BlitzIRC] Witaj na kanale " + IRCTerminal.currentChannel + ". Wiadomości zaczynające się od ukośnika");
+        messages.addLine("[BlitzIRC] to komendy serwera IRC. Używaj ich tylko wtedy, kiedy wiesz, co robisz!");
+
         terminal.initializeServerThread(new Server());
 
         returnVal = 0;
+    }
+
+    public void leaveChannel() throws IOException {
+        IRCTerminal.writer.write("QUIT :Left the channel\r\n");
+        IRCTerminal.writer.flush();
     }
 }

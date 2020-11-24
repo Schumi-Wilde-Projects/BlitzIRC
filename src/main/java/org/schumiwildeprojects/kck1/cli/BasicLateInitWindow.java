@@ -5,7 +5,6 @@ import com.googlecode.lanterna.gui2.BasicWindow;
 import java.io.IOException;
 
 public abstract class BasicLateInitWindow extends BasicWindow {
-
     protected int returnVal;
 
     public BasicLateInitWindow(String title) {

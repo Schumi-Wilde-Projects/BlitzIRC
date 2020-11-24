@@ -4,29 +4,48 @@ import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.gui2.*;
 
-import java.io.IOException;
-
 // Ekran logowania
 public class LoginWindow extends BasicLateInitWindow {
     private TextBox nicknameBox;
     private TextBox loginBox;
     private TextBox fullNameBox;
     private TextBox channelBox;
-    private final IRCTerminal terminal = IRCTerminal.getInstance();
-    private static LoginWindow instance;
-    public static LoginWindow getInstance() throws IOException {
-        if(instance == null)
-            restartWindow();
-        return instance;
-    }
+    private TextBox passwordBox;
 
-    static void restartWindow() throws IOException {
-        instance = new LoginWindow("Logowanie");
-    }
-
-    private LoginWindow(String title) throws IOException {
+    public LoginWindow(String title) {
         super(title);
-        setFixedSize(new TerminalSize(50, 7));
+        setFixedSize(new TerminalSize(50, 8));
+    }
+
+    private void addLoginOption(Panel optionPanel, Label optionLabel, String textBoxName, Panel mainPanel) {
+        int horizontalSpan = 1;
+        optionPanel.addComponent(optionLabel);
+        switch (textBoxName) {
+            case "nicknameBox" -> {
+                nicknameBox = new TextBox(new TerminalSize((int) ((float) getSize().getColumns() / 2.5), 1));
+                optionPanel.addComponent(nicknameBox);
+            }
+            case "loginBox" ->  {
+                loginBox = new TextBox(new TerminalSize((int) ((float) getSize().getColumns() / 2.5), 1));
+                optionPanel.addComponent(loginBox);
+            }
+            case "fullNameBox" -> {
+                fullNameBox = new TextBox(new TerminalSize((int) ((float) getSize().getColumns() / 2.5), 1));
+                optionPanel.addComponent(fullNameBox);
+            }
+            case "channelBox" -> {
+                channelBox = new TextBox(new TerminalSize((int) ((float) getSize().getColumns() / 2.5), 1));
+                optionPanel.addComponent(channelBox);
+            }
+            case "passwordBox" -> {
+                passwordBox = new TextBox(new TerminalSize(getSize().getColumns(), 1));
+                passwordBox.setMask('*');
+                optionPanel.addComponent(passwordBox.setLayoutData(GridLayout.createHorizontallyFilledLayoutData()));
+                horizontalSpan = 2;
+                optionLabel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(horizontalSpan));
+            }
+        }
+        mainPanel.addComponent(optionPanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(horizontalSpan)));
     }
 
     @Override
@@ -37,31 +56,24 @@ public class LoginWindow extends BasicLateInitWindow {
 
         Panel nicknamePanel = new Panel(new LinearLayout(Direction.VERTICAL));
         Label nicknameLabel = new Label("Nick:");
-        nicknamePanel.addComponent(nicknameLabel);
-        nicknameBox = new TextBox(new TerminalSize((int)((float)getSize().getColumns() / 2.5), 1));
-        nicknamePanel.addComponent(nicknameBox);
-        contentPanel.addComponent(nicknamePanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData()));
+        addLoginOption(nicknamePanel, nicknameLabel, "nicknameBox", contentPanel);
 
         Panel loginPanel = new Panel(new LinearLayout(Direction.VERTICAL));
         Label loginLabel = new Label("Login:");
-        loginPanel.addComponent(loginLabel);
-        loginBox = new TextBox(new TerminalSize((int)((float)getSize().getColumns() / 2.5), 1));
-        loginPanel.addComponent(loginBox);
-        contentPanel.addComponent(loginPanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData()));
+        addLoginOption(loginPanel, loginLabel, "loginBox", contentPanel);
 
         Panel fullNamePanel = new Panel(new LinearLayout(Direction.VERTICAL));
         Label fullNameLabel = new Label("Pełne imię:");
-        fullNamePanel.addComponent(fullNameLabel);
-        fullNameBox = new TextBox(new TerminalSize((int)((float)getSize().getColumns() / 2.5), 1));
-        fullNamePanel.addComponent(fullNameBox);
-        contentPanel.addComponent(fullNamePanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData()));
+        addLoginOption(fullNamePanel, fullNameLabel, "fullNameBox", contentPanel);
 
         Panel channelPanel = new Panel(new LinearLayout(Direction.VERTICAL));
-        Label channelLabel = new Label("Kanał: ");
-        channelPanel.addComponent(channelLabel);
-        channelBox = new TextBox(new TerminalSize((int)((float)getSize().getColumns() / 2.5), 1));
-        channelPanel.addComponent(channelBox);
-        contentPanel.addComponent(channelPanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData()));
+        Label channelLabel = new Label("Kanał:");
+        addLoginOption(channelPanel, channelLabel, "channelBox", contentPanel);
+
+        Panel passwordPanel = new Panel(new LinearLayout(Direction.VERTICAL));
+        Label passwordLabel = new Label("Hasło:");
+        addLoginOption(passwordPanel, passwordLabel, "passwordBox", contentPanel);
+
 
         contentPanel.addComponent(new EmptySpace().setLayoutData(GridLayout.createHorizontallyFilledLayoutData(2)));
 
@@ -98,4 +110,6 @@ public class LoginWindow extends BasicLateInitWindow {
     public String getChannel() {
         return channelBox.getText();
     }
+
+    public String getPassword() { return passwordBox.getText(); }
 }

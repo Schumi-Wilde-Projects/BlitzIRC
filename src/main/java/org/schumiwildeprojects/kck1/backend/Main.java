@@ -2,9 +2,7 @@ package org.schumiwildeprojects.kck1.backend;
 
 import org.schumiwildeprojects.kck1.cli.IRCTerminal;
 
-import java.io.*;
-import java.net.Socket;
-import java.util.Scanner;
+import java.io.IOException;
 
 public class Main {
 

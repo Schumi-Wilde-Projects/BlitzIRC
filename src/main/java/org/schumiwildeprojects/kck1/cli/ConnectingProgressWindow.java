@@ -3,28 +3,17 @@ package org.schumiwildeprojects.kck1.cli;
 import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.gui2.Label;
+import com.googlecode.lanterna.gui2.dialogs.MessageDialog;
 import org.schumiwildeprojects.kck1.backend.ConnectionState;
-import org.schumiwildeprojects.kck1.cli.states.ExitState;
-import org.schumiwildeprojects.kck1.cli.states.MainCommState;
 
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ConnectingProgressWindow extends BasicLateInitWindow {
-
-    private static ConnectingProgressWindow instance;
     private static IRCTerminal terminal;
-    public static ConnectingProgressWindow getInstance() {
-        if(instance == null)
-            restartWindow();
-        return instance;
-    }
 
-    static void restartWindow() {
-        instance = new ConnectingProgressWindow("Czekaj");
-    }
-    private ConnectingProgressWindow(String title) {
+    public ConnectingProgressWindow(String title) {
         super(title);
         setFixedSize(new TerminalSize("Trwa łączenie z ...".length() + IRCTerminal.currentChannel.length(), 1));
     }
@@ -51,7 +40,8 @@ public class ConnectingProgressWindow extends BasicLateInitWindow {
             if(state == ConnectionState.SUCCESSFUL) {
                 returnVal = 1;
             } else {
-                Logger.getLogger(ConnectingProgressWindow.class.getName()).log(Level.SEVERE, null, state.getMsg());
+                Logger.getLogger(ConnectingProgressWindow.class.getName()).log(Level.WARNING, state.getMsg());
+                MessageDialog.showMessageDialog(getTextGUI(), "Błąd", state.getMsg());
                 returnVal = 0;
             }
             close();

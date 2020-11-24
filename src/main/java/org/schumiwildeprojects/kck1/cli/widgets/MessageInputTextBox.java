@@ -10,7 +10,7 @@ import java.util.List;
 
 public class MessageInputTextBox extends TextBox {
 
-    private List<SubmitListener> listeners;
+    private final List<SubmitListener> listeners;
 
     public interface SubmitListener {
         void onAction();

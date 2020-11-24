@@ -1,13 +1,10 @@
 package org.schumiwildeprojects.kck1.cli.states;
 
-import com.googlecode.lanterna.gui2.BasicWindow;
-import org.schumiwildeprojects.kck1.backend.ConnectionState;
 import org.schumiwildeprojects.kck1.cli.BasicLateInitWindow;
+import org.schumiwildeprojects.kck1.cli.IRCTerminal;
 import org.schumiwildeprojects.kck1.cli.LoginWindow;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 // Logowanie
 public class LoginState extends State {
@@ -15,12 +12,12 @@ public class LoginState extends State {
 
     public LoginState() throws IOException {
         super();
-        window = LoginWindow.getInstance();
     }
 
     @Override
-    public BasicLateInitWindow getWindow() throws IOException {
-        return LoginWindow.getInstance();
+    public BasicLateInitWindow getWindow() {
+        window = new LoginWindow("Logowanie");
+        return window;
     }
 
     @Override
@@ -34,7 +31,9 @@ public class LoginState extends State {
         String login = window.getLogin();
         String fullName = window.getFullName();
         String channel = window.getChannel();
-        terminal.initializeConnectionThread(nick, login, fullName, channel);
+        String password = window.getPassword();
+        IRCTerminal.currentChannel = channel;
+        terminal.initializeConnectionThread(nick, login, fullName, channel, password);
         terminal.changeState(new ConnectingProgressState());
     }
 }

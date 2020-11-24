@@ -6,20 +6,19 @@ import org.schumiwildeprojects.kck1.cli.ConnectingProgressWindow;
 import java.io.IOException;
 
 public class ConnectingProgressState extends State {
-    private ConnectingProgressWindow window;
 
     public ConnectingProgressState() throws IOException {
-        window = ConnectingProgressWindow.getInstance();
+        super();
     }
 
     @Override
     public BasicLateInitWindow getWindow() {
-        return ConnectingProgressWindow.getInstance();
+        return new ConnectingProgressWindow("Czekaj");
     }
 
     @Override
     public void onClose() throws IOException {
-        terminal.changeState(new ExitState());
+        terminal.changeState(new LoginState());
     }
 
     @Override

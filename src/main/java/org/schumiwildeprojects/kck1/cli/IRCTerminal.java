@@ -14,7 +14,6 @@ import org.schumiwildeprojects.kck1.cli.states.State;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -24,18 +23,22 @@ import java.util.logging.Logger;
 public class IRCTerminal {
     private static IRCTerminal instance;
     public static String nickname;
+    public static String currentLogin;
+    public static String currentFullName;
+    public static String currentPassword;
     private WindowBasedTextGUI textGUI;
     private final Terminal terminal;
     private final Screen screen;
     public static String currentChannel;
     public static BufferedReader reader;
     public static BufferedWriter writer;
-    private Thread serverThread, writeThread;
+
+    private Thread serverThread;
     private ConnectionThread connectionRunnable;
     private Thread connectionThread, resultThread;
     private Socket socket;
     private State state;
-    public static volatile boolean appIsOpen = true;
+    public static volatile boolean appIsOpen = false;
 
     class ConnectionThread implements Runnable {
 
@@ -43,18 +46,20 @@ public class IRCTerminal {
         private final String login;
         private final String fullName;
         private final String channel;
+        private final String pass;
         private ConnectionState state;
 
-        public ConnectionThread(String nick, String login, String fullName, String channel) {
+        public ConnectionThread(String nick, String login, String fullName, String channel, String pass) {
             this.nick = nick;
             this.login = login;
             this.fullName = fullName;
             this.channel = channel;
+            this.pass = pass;
         }
         @Override
         public void run() {
             try {
-                state = connect(nick, login, fullName, channel);
+                state = connect(nick, login, fullName, channel, pass);
             } catch (IOException e) {
                 Logger.getLogger(LoginWindow.class.getName()).log(Level.SEVERE, null, e);
                 System.exit(-1);
@@ -66,44 +71,7 @@ public class IRCTerminal {
         }
     }
 
-    private static class WriteThread implements Runnable {
-
-        @Override
-        public void run() {
-            String line1 = " ";
-            Scanner sc = new Scanner(System.in);
-            while (appIsOpen) {
-                /*
-                line1 = sc.nextLine();
-                if (line1.charAt(0) == '/') {
-                    try {
-                        writer.write( line1.substring(1) + "\r\n");
-                        writer.flush();
-                    } catch (IOException e) {
-                        Logger.getLogger(IRCTerminal.class.getName()).log(Level.SEVERE, null, e);
-                    }
-                } else {
-                    try {
-                        writer.write("PRIVMSG " + currentChannel +" :" + line1 + "\r\n");
-                        writer.flush();
-                    } catch (IOException e) {
-                        Logger.getLogger(IRCTerminal.class.getName()).log(Level.SEVERE, null, e);
-                    }
-                }
-                */
-                try {
-                    //noinspection BusyWait
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-    }
-
-    public ConnectionState connect(String nick, String login, String name, String channel) throws IOException {
-        String pass = ""; // do identyfikacji
-        Scanner sc = new Scanner(System.in);
+    public ConnectionState connect(String nick, String login, String name, String channel, String pass) throws IOException {
 
         // Łączenie z serwerem
         socket = new Socket(Main.SERVER_URL, Main.PORT);
@@ -115,7 +83,7 @@ public class IRCTerminal {
         // Logowanie się do serwera
         writer.write("NICK " + nick + "\r\n");
         writer.write("USER " + login + " 8 * : " + name + "\r\n");
-        writer.write("msg nickserv identify " + pass + "\r\n");
+        writer.write("msg nickserv identify " + nick + " " + pass + "\r\n");
         writer.flush();
 
         // Read lines from the server until it tells us we have connected.
@@ -124,6 +92,9 @@ public class IRCTerminal {
             if (line.contains("004")) { // Kod oznaczający połączenie
                 // Jesteśmy zalogowani
                 break;
+            }
+            else if( line.contains("432")) {
+                return ConnectionState.INVALID_NICKNAME;
             }
             else if (line.contains("433")) { // Nazwa użytkownika jest już zajęta
                 System.out.println("Nickname is already in use.");
@@ -137,9 +108,11 @@ public class IRCTerminal {
 
         currentChannel = channel;
         nickname = nick;
+        currentLogin = login;
+        currentFullName = name;
+        currentPassword = pass;
 
-        writeThread = new Thread(new WriteThread());
-        writeThread.start();
+        appIsOpen = true;
 
         return ConnectionState.SUCCESSFUL;
     }
@@ -159,27 +132,16 @@ public class IRCTerminal {
         screen = new TerminalScreen(terminal);
         screen.startScreen();
         textGUI = new MultiWindowTextGUI(screen);
+
     }
 
     private class TimeoutTask extends TimerTask {
 
         @Override
         public void run() {
-            if(socket != null) {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    System.out.println("Could not close socket");
-                    System.exit(-1);
-                }
-            }
+            closeConnection();
             System.exit(0);
         }
-    }
-
-    // zwraca terminal Lanterna który jest wyświetlany w oknie
-    public Terminal getTerminal() {
-        return terminal;
     }
 
     public void start() throws IOException {
@@ -191,27 +153,19 @@ public class IRCTerminal {
         appIsOpen = false;
         Timer timer = new Timer();
         timer.schedule(new TimeoutTask(), 5000);
-        while((writeThread != null && writeThread.isAlive()) ||
-                (serverThread != null && serverThread.isAlive()) ||
-                (connectionThread != null && connectionThread.isAlive()) ||
-                (resultThread != null && resultThread.isAlive())) {
-            try {
-                //noinspection BusyWait
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+        try {
+            if(connectionThread != null)
+                connectionThread.join();
+            if(serverThread != null)
+                serverThread.join();
+            if(resultThread != null)
+                resultThread.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
         timer.cancel();
 
-        if(socket != null) {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                System.out.println("Could not close socket");
-                System.exit(-1);
-            }
-        }
+        closeConnection();
     }
 
     public void changeState(State state) {
@@ -220,17 +174,25 @@ public class IRCTerminal {
 
     void show() throws IOException {
         textGUI = new MultiWindowTextGUI(screen);
-        textGUI.addWindow(state.getWindow());
         BasicLateInitWindow window = state.getWindow();
-        state.getWindow().start();
-        textGUI.waitForWindowToClose(state.getWindow());
+        textGUI.addWindow(window);
+        window.start();
+        textGUI.waitForWindowToClose(window);
         // zwraca jedyne okno w TextGUI
         int retVal = window.returnValue();
         switch (retVal) {
             case 0 -> state.onClose();
             case 1 -> state.onSubmit();
+            case 2 -> state.onRetry();
             default -> throw new IllegalStateException("Wrong window return value");
         }
+    }
+
+
+    public Thread getServerThread() { return serverThread; }
+
+    public Thread getResultThread() {
+        return resultThread;
     }
 
     public ConnectionThread getConnectionRunnable() {
@@ -241,9 +203,9 @@ public class IRCTerminal {
         return connectionThread;
     }
 
-    public void initializeConnectionThread(String nick, String login, String fullName, String channel) {
+    public void initializeConnectionThread(String nick, String login, String fullName, String channel, String pass) {
         currentChannel = channel;
-        connectionRunnable = new ConnectionThread(nick, login, fullName, channel);
+        connectionRunnable = new ConnectionThread(nick, login, fullName, channel, pass);
         connectionThread = new Thread(connectionRunnable);
         connectionThread.start();
     }
@@ -261,5 +223,16 @@ public class IRCTerminal {
     public void close() throws IOException {
         terminal.exitPrivateMode();
         terminal.close();
+    }
+
+    public void closeConnection() {
+        if(socket != null && !socket.isClosed()) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                System.out.println("Could not close socket");
+                System.exit(-1);
+            }
+        }
     }
 }

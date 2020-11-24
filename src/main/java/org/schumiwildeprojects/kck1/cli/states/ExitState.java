@@ -1,6 +1,5 @@
 package org.schumiwildeprojects.kck1.cli.states;
 
-import com.googlecode.lanterna.gui2.BasicWindow;
 import org.schumiwildeprojects.kck1.cli.BasicLateInitWindow;
 
 import java.io.IOException;

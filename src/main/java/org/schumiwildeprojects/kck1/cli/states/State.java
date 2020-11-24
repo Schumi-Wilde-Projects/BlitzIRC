@@ -15,4 +15,5 @@ public abstract class State {
     public abstract BasicLateInitWindow getWindow() throws IOException;
     public abstract void onClose() throws IOException;
     public abstract void onSubmit() throws IOException;
+    public void onRetry() throws IOException {}
 }

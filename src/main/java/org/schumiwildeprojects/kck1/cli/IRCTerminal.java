@@ -126,13 +126,13 @@ public class IRCTerminal {
     private IRCTerminal() throws IOException {
         DefaultTerminalFactory factory = new DefaultTerminalFactory();
         factory.setInitialTerminalSize(new TerminalSize(200, 50));
+        factory.setTerminalEmulatorTitle("BlitzIRC");
         terminal = factory.createTerminal();
         terminal.enterPrivateMode();
         terminal.setCursorVisible(false);
         screen = new TerminalScreen(terminal);
         screen.startScreen();
         textGUI = new MultiWindowTextGUI(screen);
-
     }
 
     private class TimeoutTask extends TimerTask {

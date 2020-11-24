@@ -7,6 +7,8 @@ import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
+import com.googlecode.lanterna.terminal.swing.SwingTerminal;
+import com.googlecode.lanterna.terminal.swing.SwingTerminalFrame;
 import org.schumiwildeprojects.kck1.backend.ConnectionState;
 import org.schumiwildeprojects.kck1.backend.Main;
 import org.schumiwildeprojects.kck1.cli.states.LoginState;
@@ -127,7 +129,7 @@ public class IRCTerminal {
         DefaultTerminalFactory factory = new DefaultTerminalFactory();
         factory.setInitialTerminalSize(new TerminalSize(200, 50));
         factory.setTerminalEmulatorTitle("BlitzIRC");
-        terminal = factory.createTerminal();
+        terminal = factory.createTerminalEmulator();
         terminal.enterPrivateMode();
         terminal.setCursorVisible(false);
         screen = new TerminalScreen(terminal);

@@ -6,6 +6,7 @@ import com.googlecode.lanterna.gui2.*;
 
 // Ekran logowania
 public class LoginWindow extends BasicLateInitWindow {
+    private TextBox serverNameBox;
     private TextBox nicknameBox;
     private TextBox loginBox;
     private TextBox fullNameBox;
@@ -21,6 +22,10 @@ public class LoginWindow extends BasicLateInitWindow {
         int horizontalSpan = 1;
         optionPanel.addComponent(optionLabel);
         switch (textBoxName) {
+            case "serverNameBox" -> {
+                serverNameBox = new TextBox(new TerminalSize((int) ((float) getSize().getColumns() / 2.5), 1));
+                optionPanel.addComponent(serverNameBox);
+            }
             case "nicknameBox" -> {
                 nicknameBox = new TextBox(new TerminalSize((int) ((float) getSize().getColumns() / 2.5), 1));
                 optionPanel.addComponent(nicknameBox);
@@ -38,7 +43,7 @@ public class LoginWindow extends BasicLateInitWindow {
                 optionPanel.addComponent(channelBox);
             }
             case "passwordBox" -> {
-                passwordBox = new TextBox(new TerminalSize(getSize().getColumns(), 1));
+                passwordBox = new TextBox(new TerminalSize((int) ((float) getSize().getColumns() / 2.5), 1));
                 passwordBox.setMask('*');
                 optionPanel.addComponent(passwordBox.setLayoutData(GridLayout.createHorizontallyFilledLayoutData()));
                 horizontalSpan = 2;
@@ -53,6 +58,10 @@ public class LoginWindow extends BasicLateInitWindow {
         TerminalSize termSize = getTextGUI().getScreen().getTerminalSize();
         setPosition(new TerminalPosition((termSize.getColumns() - getSize().getColumns()) / 2, (termSize.getRows() - getSize().getRows()) / 2));
         Panel contentPanel = new Panel(new GridLayout(2));
+
+        Panel serverNamePanel = new Panel(new LinearLayout(Direction.VERTICAL));
+        Label serverNameLabel = new Label("Nazwa serwera:");
+        addLoginOption(serverNamePanel, serverNameLabel, "serverNameBox", contentPanel);
 
         Panel nicknamePanel = new Panel(new LinearLayout(Direction.VERTICAL));
         Label nicknameLabel = new Label("Nick:");
@@ -93,6 +102,10 @@ public class LoginWindow extends BasicLateInitWindow {
         setComponent(contentPanel);
 
         returnVal = 0;
+    }
+
+    public String getServerName() {
+        return serverNameBox.getText();
     }
 
     public String getNickname() {

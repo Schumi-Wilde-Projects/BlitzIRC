@@ -27,13 +27,14 @@ public class LoginState extends State {
 
     @Override
     public void onSubmit() throws IOException {
+        String serverName = window.getServerName();
         String nick = window.getNickname();
         String login = window.getLogin();
         String fullName = window.getFullName();
         String channel = window.getChannel();
         String password = window.getPassword();
         IRCTerminal.currentChannel = channel;
-        terminal.initializeConnectionThread(nick, login, fullName, channel, password);
+        terminal.initializeConnectionThread(serverName, nick, login, fullName, channel, password);
         terminal.changeState(new ConnectingProgressState());
     }
 }

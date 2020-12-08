@@ -33,7 +33,7 @@ public class MainCommState extends State {
 
     @Override
     public void onRetry() throws IOException {
-        terminal.initializeConnectionThread(IRCTerminal.nickname, IRCTerminal.currentLogin, IRCTerminal.currentFullName, IRCTerminal.currentChannel, IRCTerminal.currentPassword);
+        terminal.initializeConnectionThread(IRCTerminal.serverName, IRCTerminal.nickname, IRCTerminal.currentLogin, IRCTerminal.currentFullName, IRCTerminal.currentChannel, IRCTerminal.currentPassword);
         terminal.changeState(new ConnectingProgressState());
     }
 }

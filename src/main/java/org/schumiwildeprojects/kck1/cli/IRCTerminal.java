@@ -15,7 +15,10 @@ import org.schumiwildeprojects.kck1.cli.states.LoginState;
 import org.schumiwildeprojects.kck1.cli.states.State;
 
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -24,6 +27,7 @@ import java.util.logging.Logger;
 // singleton (tylko jedno okno główne na aplikację)
 public class IRCTerminal {
     private static IRCTerminal instance;
+    public static String serverName;
     public static String nickname;
     public static String currentLogin;
     public static String currentFullName;
@@ -44,6 +48,7 @@ public class IRCTerminal {
 
     class ConnectionThread implements Runnable {
 
+        private final String serverName;
         private final String nick;
         private final String login;
         private final String fullName;
@@ -51,7 +56,8 @@ public class IRCTerminal {
         private final String pass;
         private ConnectionState state;
 
-        public ConnectionThread(String nick, String login, String fullName, String channel, String pass) {
+        public ConnectionThread(String serverName, String nick, String login, String fullName, String channel, String pass) {
+            this.serverName = serverName;
             this.nick = nick;
             this.login = login;
             this.fullName = fullName;
@@ -60,11 +66,15 @@ public class IRCTerminal {
         }
         @Override
         public void run() {
-            try {
-                state = connect(nick, login, fullName, channel, pass);
-            } catch (IOException e) {
-                Logger.getLogger(LoginWindow.class.getName()).log(Level.SEVERE, null, e);
-                System.exit(-1);
+            if (!serverName.equals("") && !nick.equals("") && !login.equals("") && !fullName.equals("") && !channel.equals("")) {
+                try {
+                    state = connect(serverName, nick, login, fullName, channel, pass);
+                } catch (IOException e) {
+                    Logger.getLogger(LoginWindow.class.getName()).log(Level.SEVERE, null, e);
+                    System.exit(-1);
+                }
+            } else {
+                state = ConnectionState.FIELDS_NOT_FILLED;
             }
         }
 
@@ -73,10 +83,17 @@ public class IRCTerminal {
         }
     }
 
-    public ConnectionState connect(String nick, String login, String name, String channel, String pass) throws IOException {
+    public ConnectionState connect(String serverName, String nick, String login, String name, String channel, String pass) throws IOException {
 
         // Łączenie z serwerem
-        socket = new Socket(Main.SERVER_URL, Main.PORT);
+        socket = new Socket();
+        try {
+            socket.connect(new InetSocketAddress(serverName, Main.PORT), 10000);
+        } catch (SocketTimeoutException e) {
+            return ConnectionState.SERVER_TIMEOUT;
+        } catch (SocketException e) {
+            return ConnectionState.SERVER_NAME_EMPTY;
+        }
         writer = new BufferedWriter(
                 new OutputStreamWriter(socket.getOutputStream()));
         reader = new BufferedReader(
@@ -113,9 +130,7 @@ public class IRCTerminal {
         currentLogin = login;
         currentFullName = name;
         currentPassword = pass;
-
         appIsOpen = true;
-
         return ConnectionState.SUCCESSFUL;
     }
 
@@ -190,7 +205,6 @@ public class IRCTerminal {
         }
     }
 
-
     public Thread getServerThread() { return serverThread; }
 
     public Thread getResultThread() {
@@ -205,9 +219,9 @@ public class IRCTerminal {
         return connectionThread;
     }
 
-    public void initializeConnectionThread(String nick, String login, String fullName, String channel, String pass) {
+    public void initializeConnectionThread(String serverName, String nick, String login, String fullName, String channel, String pass) {
         currentChannel = channel;
-        connectionRunnable = new ConnectionThread(nick, login, fullName, channel, pass);
+        connectionRunnable = new ConnectionThread(serverName, nick, login, fullName, channel, pass);
         connectionThread = new Thread(connectionRunnable);
         connectionThread.start();
     }
@@ -228,7 +242,7 @@ public class IRCTerminal {
     }
 
     public void closeConnection() {
-        if(socket != null && !socket.isClosed()) {
+        if (socket != null && !socket.isClosed()) {
             try {
                 socket.close();
             } catch (IOException e) {
